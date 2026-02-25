@@ -46,8 +46,8 @@ def process_weather():
     clean_df.show()
     print(f"💾 Збереження у форматі Parquet...")
 
-    output_path = "s3a://weather-data/processed/"
-    clean_df.write.mode("overwrite").parquet(output_path)
+    output_path = "s3a://weather-data/silver/weather_reports"
+    clean_df.write.mode("overwrite").partitionBy("city").parquet(output_path)
 
     print(f"✅ Готово! Дані збережено в: {output_path}")
     spark.stop()
