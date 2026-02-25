@@ -1,9 +1,17 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, element_at, year, month, dayofmonth
 import os
+import boto3
 
 os.environ["HADOOP_HOME"] = "C:\\hadoop"
 os.environ["PATH"] += os.pathsep + "C:\\hadoop\\bin"
+
+s3_client = boto3.client('s3',
+    endpoint_url='http://localhost:9000',
+    aws_access_key_id='admin',
+    aws_secret_access_key='password',
+    region_name='us-east-1'
+)
 
 def create_spark_session():
     return SparkSession.builder \
@@ -55,5 +63,29 @@ def process_weather():
     print(f"✅ Готово! Дані збережено в: {output_path}")
     spark.stop()
 
+def archive_raw_files():
+    bucket_name = 'weather-data'
+    prefix = 'raw/'
+    archive_prefix = 'archive/'
+
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+    
+    if 'Contents' in response:
+        for obj in response['Contents']:
+            file_key = obj['Key']
+            if file_key == prefix: continue 
+
+            new_key = file_key.replace(prefix, archive_prefix, 1)
+
+            s3_client.copy_object(
+                Bucket=bucket_name,
+                CopySource={'Bucket': bucket_name, 'Key': file_key},
+                Key=new_key
+            )
+            s3_client.delete_object(Bucket=bucket_name, Key=file_key)
+            print(f"📦 Файл {file_key} переміщено в архів.")
+    else:
+        print("📭 Папка raw порожня, нічого архівувати.")
 if __name__ == "__main__":
     process_weather()
+    archive_raw_files()
