@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, element_at
+from pyspark.sql.functions import col, element_at, year, month, dayofmonth
 import os
 
 os.environ["HADOOP_HOME"] = "C:\\hadoop"
@@ -26,6 +26,7 @@ def apply_hadoop_fixes(spark):
     hadoop_conf.set("fs.s3a.threads.keepalivetime", "60")
 
 def process_weather():
+
     spark = create_spark_session()
     apply_hadoop_fixes(spark)
 
@@ -41,13 +42,15 @@ def process_weather():
         col("main.humidity").alias("humidity"),
         element_at(col("weather.description"), 1).alias("sky_condition"),
         col("dt").cast("timestamp").alias("observation_time")
-    )
+    ).withColumn("year", year(col("observation_time"))) \
+    .withColumn("month", month(col("observation_time"))) \
+    .withColumn("day", dayofmonth(col("observation_time")))
     
     clean_df.show()
     print(f"💾 Збереження у форматі Parquet...")
 
-    output_path = "s3a://weather-data/silver/weather_reports"
-    clean_df.write.mode("overwrite").partitionBy("city").parquet(output_path)
+    output_path = "s3a://weather-data/silver/weather_history"
+    clean_df.write.mode("append").partitionBy("year", "month", "day","city").parquet(output_path)
 
     print(f"✅ Готово! Дані збережено в: {output_path}")
     spark.stop()
