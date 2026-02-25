@@ -6,14 +6,23 @@ from datetime import datetime
 from dotenv import load_dotenv
 import boto3
 from botocore.client import Config
+import logging
 
 load_dotenv()
 
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 CITIES = ["Kyiv", "Lviv", "Odesa", "Kharkiv", "Dnipro"]
+os.makedirs('logs', exist_ok=True)
 
-
-
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] [%(filename)s] %(message)s',
+    handlers=[
+        logging.FileHandler("logs/pipeline.log", mode='a', encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 s3 = boto3.resource('s3',
                     endpoint_url='http://localhost:9000',
                     aws_access_key_id='admin',
@@ -34,9 +43,9 @@ def fetch_weather():
 
             bucket_name = 'weather-data'
             s3.Object(bucket_name, f"raw/{filename}").put(Body=json.dumps(data, indent=4))
-            print(f"✅ Дані для {city} збережено!")
+            logger.info(f"✅ Дані для {city} збережено!")
         except Exception as e:
-            print(f"❌ Помилка для {city}: {e}")
+            logger.error(f"❌ Помилка для {city}: {e}")
 
 if __name__ == "__main__":
     fetch_weather()

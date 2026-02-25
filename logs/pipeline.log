@@ -1,0 +1,30 @@
+2026-02-25 13:18:11,190 [INFO] [weather_processing.py] 📥 Читання сирих даних...
+2026-02-25 13:18:15,518 [INFO] [weather_processing.py] ⚙️ Трансформація даних...
+2026-02-25 13:18:19,120 [INFO] [weather_processing.py] 💾 Збереження у форматі Parquet...
+2026-02-25 13:18:24,493 [INFO] [weather_processing.py] ✅ Готово! Дані збережено в: s3a://weather-data/silver/weather_history
+2026-02-25 13:18:24,649 [INFO] [weather_processing.py] 📦 Файл raw/weather_Dnipro_20260225_131706.json переміщено в архів.
+2026-02-25 13:18:24,678 [INFO] [weather_processing.py] 📦 Файл raw/weather_Kharkiv_20260225_131706.json переміщено в архів.
+2026-02-25 13:18:24,693 [INFO] [weather_processing.py] 📦 Файл raw/weather_Kyiv_20260225_131705.json переміщено в архів.
+2026-02-25 13:18:24,722 [INFO] [weather_processing.py] 📦 Файл raw/weather_Lviv_20260225_131705.json переміщено в архів.
+2026-02-25 13:18:24,743 [INFO] [weather_processing.py] 📦 Файл raw/weather_Odesa_20260225_131705.json переміщено в архів.
+2026-02-25 13:18:24,772 [INFO] [clientserver.py] Closing down clientserver connection
+2026-02-25 13:20:41,236 [INFO] [weather_ingestion.py] ✅ Дані для Kyiv збережено!
+2026-02-25 13:20:41,338 [INFO] [weather_ingestion.py] ✅ Дані для Lviv збережено!
+2026-02-25 13:20:41,434 [INFO] [weather_ingestion.py] ✅ Дані для Odesa збережено!
+2026-02-25 13:20:41,550 [INFO] [weather_ingestion.py] ✅ Дані для Kharkiv збережено!
+2026-02-25 13:20:41,668 [INFO] [weather_ingestion.py] ✅ Дані для Dnipro збережено!
+2026-02-25 13:21:08,188 [INFO] [weather_processing.py] 📥 Читання сирих даних...
+2026-02-25 13:21:13,780 [INFO] [weather_processing.py] ⚙️ Трансформація даних...
+2026-02-25 13:21:16,570 [INFO] [weather_processing.py] 💾 Збереження у форматі Parquet...
+2026-02-25 13:21:22,735 [INFO] [weather_processing.py] ✅ Готово! Дані збережено в: s3a://weather-data/silver/weather_history
+2026-02-25 13:21:23,451 [INFO] [weather_processing.py] 📦 Файл raw/weather_Dnipro_20260225_131902.json переміщено в архів.
+2026-02-25 13:21:23,487 [INFO] [weather_processing.py] 📦 Файл raw/weather_Dnipro_20260225_132041.json переміщено в архів.
+2026-02-25 13:21:23,514 [INFO] [weather_processing.py] 📦 Файл raw/weather_Kharkiv_20260225_131902.json переміщено в архів.
+2026-02-25 13:21:23,551 [INFO] [weather_processing.py] 📦 Файл raw/weather_Kharkiv_20260225_132041.json переміщено в архів.
+2026-02-25 13:21:23,582 [INFO] [weather_processing.py] 📦 Файл raw/weather_Kyiv_20260225_131902.json переміщено в архів.
+2026-02-25 13:21:23,606 [INFO] [weather_processing.py] 📦 Файл raw/weather_Kyiv_20260225_132041.json переміщено в архів.
+2026-02-25 13:21:23,638 [INFO] [weather_processing.py] 📦 Файл raw/weather_Lviv_20260225_131902.json переміщено в архів.
+2026-02-25 13:21:23,666 [INFO] [weather_processing.py] 📦 Файл raw/weather_Lviv_20260225_132041.json переміщено в архів.
+2026-02-25 13:21:23,698 [INFO] [weather_processing.py] 📦 Файл raw/weather_Odesa_20260225_131902.json переміщено в архів.
+2026-02-25 13:21:23,727 [INFO] [weather_processing.py] 📦 Файл raw/weather_Odesa_20260225_132041.json переміщено в архів.
+2026-02-25 13:21:23,785 [INFO] [clientserver.py] Closing down clientserver connection
