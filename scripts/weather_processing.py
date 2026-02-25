@@ -2,10 +2,22 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, element_at, year, month, dayofmonth
 import os
 import boto3
+import logging
 
 os.environ["HADOOP_HOME"] = "C:\\hadoop"
 os.environ["PATH"] += os.pathsep + "C:\\hadoop\\bin"
+os.makedirs('logs', exist_ok=True)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] [%(filename)s] %(message)s',
+    handlers=[
+        logging.FileHandler("logs/pipeline.log", mode='a', encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 s3_client = boto3.client('s3',
     endpoint_url='http://localhost:9000',
     aws_access_key_id='admin',
@@ -38,11 +50,11 @@ def process_weather():
     spark = create_spark_session()
     apply_hadoop_fixes(spark)
 
-    print("📥 Читання сирих даних...")
+    logger.info("📥 Читання сирих даних...")
     input_path = "s3a://weather-data/raw/*.json"
     df = spark.read.option("multiLine", "true").json(input_path)
 
-    print("⚙️ Трансформація даних...")
+    logger.info("⚙️ Трансформація даних...")
     
     clean_df = df.select(
         col("name").alias("city"),
@@ -55,12 +67,12 @@ def process_weather():
     .withColumn("day", dayofmonth(col("observation_time")))
     
     clean_df.show()
-    print(f"💾 Збереження у форматі Parquet...")
+    logger.info(f"💾 Збереження у форматі Parquet...")
 
     output_path = "s3a://weather-data/silver/weather_history"
     clean_df.write.mode("append").partitionBy("year", "month", "day","city").parquet(output_path)
 
-    print(f"✅ Готово! Дані збережено в: {output_path}")
+    logger.info(f"✅ Готово! Дані збережено в: {output_path}")
     spark.stop()
 
 def archive_raw_files():
@@ -83,9 +95,9 @@ def archive_raw_files():
                 Key=new_key
             )
             s3_client.delete_object(Bucket=bucket_name, Key=file_key)
-            print(f"📦 Файл {file_key} переміщено в архів.")
+            logger.info(f"📦 Файл {file_key} переміщено в архів.")
     else:
-        print("📭 Папка raw порожня, нічого архівувати.")
+        logger.info("📭 Папка raw порожня, нічого архівувати.")
 if __name__ == "__main__":
     process_weather()
     archive_raw_files()
