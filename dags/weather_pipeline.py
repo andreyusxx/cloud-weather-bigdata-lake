@@ -23,12 +23,17 @@ with DAG(
 
     task_fetch_data = BashOperator(
         task_id='fetch_weather_api',
-        bash_command='python /opt/airflow/weather_ingestion.py'
+        bash_command='python /opt/airflow/scripts/weather_ingestion.py'
     )
 
     task_process_spark = BashOperator(
         task_id='process_with_spark',
-        bash_command='python /opt/airflow/scripts/weather_processing.py'
+        bash_command=(
+        'docker exec spark-master /opt/spark/bin/spark-submit '
+        '--master spark://spark-master:7077 '
+        '--conf "spark.jars.ivy=/tmp/.ivy2" '
+        '--packages org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk-bundle:1.11.901 '
+        '/opt/spark/scripts/weather_processing.py'
+        )
     )
-
     task_fetch_data >> task_process_spark

@@ -4,8 +4,8 @@ import os
 import boto3
 import logging
 
-os.environ["HADOOP_HOME"] = "C:\\hadoop"
-os.environ["PATH"] += os.pathsep + "C:\\hadoop\\bin"
+#os.environ["HADOOP_HOME"] = "C:\\hadoop"
+#os.environ["PATH"] += os.pathsep + "C:\\hadoop\\bin"
 os.makedirs('logs', exist_ok=True)
 
 logging.basicConfig(
@@ -19,7 +19,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 s3_client = boto3.client('s3',
-    endpoint_url='http://localhost:9000',
+    endpoint_url='http://minio:9000',
     aws_access_key_id='admin',
     aws_secret_access_key='password',
     region_name='us-east-1'
@@ -28,8 +28,7 @@ s3_client = boto3.client('s3',
 def create_spark_session():
     return SparkSession.builder \
         .appName("WeatherProcessing") \
-        .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk-bundle:1.11.901") \
-        .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:9000") \
+        .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000") \
         .config("spark.hadoop.fs.s3a.access.key", "admin") \
         .config("spark.hadoop.fs.s3a.secret.key", "password") \
         .config("spark.hadoop.fs.s3a.path.style.access", "true") \

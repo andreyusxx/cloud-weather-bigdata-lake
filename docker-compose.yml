@@ -10,6 +10,8 @@ services:
       - "8080:8080"
       - "7077:7077"
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    volumes:
+      - ./scripts:/opt/spark/scripts
 
   spark-worker:
     image: apache/spark:3.5.0
@@ -51,6 +53,7 @@ services:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - _PIP_ADDITIONAL_REQUIREMENTS=requests boto3 python-dotenv protobuf==4.24.4
     logging:
       options:
         max-size: "10m"
@@ -59,6 +62,7 @@ services:
       - .:/opt/airflow  
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8085:8080"
     command: webserver
@@ -70,8 +74,10 @@ services:
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - _PIP_ADDITIONAL_REQUIREMENTS=requests boto3 python-dotenv protobuf==4.24.4
     volumes:
       - .:/opt/airflow
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
+      - /var/run/docker.sock:/var/run/docker.sock
     command: scheduler
