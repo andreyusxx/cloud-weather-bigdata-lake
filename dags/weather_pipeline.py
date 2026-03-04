@@ -32,6 +32,7 @@ with DAG(
         'docker exec spark-master /opt/spark/bin/spark-submit '
         '--master spark://spark-master:7077 '
         '--conf "spark.jars.ivy=/tmp/.ivy2" '
+        '--conf "spark.sql.files.ignoreMissingFiles=true" '
         '--packages org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk-bundle:1.11.901 '
         '/opt/spark/scripts/weather_processing.py'
         )
