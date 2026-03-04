@@ -37,4 +37,14 @@ with DAG(
         '/opt/spark/scripts/weather_processing.py'
         )
     )
-    task_fetch_data >> task_process_spark
+    task_analytics_gold = BashOperator(
+        task_id='generate_gold_layer',
+        bash_command=(
+            'docker exec spark-master /opt/spark/bin/spark-submit '
+            '--master spark://spark-master:7077 '
+            '--conf "spark.jars.ivy=/tmp/.ivy2" '
+            '--packages org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk-bundle:1.11.901 '
+            '/opt/spark/scripts/weather_analytics.py'
+        )
+    )
+    task_fetch_data >> task_process_spark >> task_analytics_gold
