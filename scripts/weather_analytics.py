@@ -40,6 +40,9 @@ def generate_gold_layer():
     logger.info("📥 Читання даних із Silver шару...")
     silver_df = spark.read.parquet(input_path)
 
+    if silver_df.filter(col("temperature").isNull()).count() > 0:
+         logger.warning("❗ Знайдено NULL значення в Silver. Можливо, варто очистити дані.")
+
     logger.info("📊 Розрахунок щоденної статистики...")
     gold_df = silver_df.groupBy("city", "year", "month", "day").agg(
         avg("temperature").alias("avg_temp"),
@@ -49,10 +52,8 @@ def generate_gold_layer():
         count("*").alias("measurements_count")
     ).orderBy("year", "month", "day", "city")
 
-    gold_df.show()
-
-    logger.info(f"💾 Збереження аналітики в Gold шар...")
-    if run_data_quality_checks(gold_df):
+    if run_data_quality_checks(gold_df):   
+        logger.info(f"💾 Збереження аналітики в Gold шар...")
         gold_df.write.mode("overwrite").parquet(output_path)
         logger.info("✅ Gold шар успішно оновлено!")
     else:
