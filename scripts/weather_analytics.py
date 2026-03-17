@@ -17,14 +17,10 @@ def create_spark_session():
 
 def run_data_quality_checks(df):
     print("=== Запуск перевірки якості даних ===")
-    # 1. Перевірка на NULL (чи є пусті рядки)
-    null_count = df.filter(col("city").isNull() | col("avg_temp").isNull()).count()
+    null_count = df.filter(col("avg_temp").isNull()).count()
     
-    # 2. Перевірка на аномальну температуру
-    anomaly_count = df.filter((col("avg_temp") < -70) | (col("avg_temp") > 70)).count()
-    
-    if null_count > 0 or anomaly_count > 0:
-        logger.error(f"❌ ПОМИЛКА DQ: Знайдено {null_count} порожніх значень та {anomaly_count} аномалій!")
+    if null_count > 0:
+        logger.error(f"❌ ПОМИЛКА DQ: Знайдено {null_count} порожніх значень")
         # В реальних проектах тут ми або зупиняємо пайплайн, або відправляємо дані в "смітник" (quarantine)
         return False
     
@@ -40,10 +36,7 @@ def generate_gold_layer():
     logger.info("📥 Читання даних із Silver шару...")
     silver_df = spark.read.parquet(input_path)
 
-    if silver_df.filter(col("temperature").isNull()).count() > 0:
-         logger.warning("❗ Знайдено NULL значення в Silver. Можливо, варто очистити дані.")
-
-    logger.info("📊 Розрахунок щоденної статистики...")
+    logger.info("📊 Розрахунок статистики...")
     gold_df = silver_df.groupBy("city", "year", "month", "day").agg(
         avg("temperature").alias("avg_temp"),
         max("temperature").alias("max_temp"),

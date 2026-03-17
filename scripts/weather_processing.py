@@ -57,7 +57,7 @@ def process_weather():
         logger.warning("📭 Немає даних для обробки.")
         spark.stop()
         return False
-
+    
     logger.info("⚙️ Трансформація даних...")
     
     clean_df = df.select(
@@ -70,13 +70,21 @@ def process_weather():
     .withColumn("month", month(col("observation_time"))) \
     .withColumn("day", dayofmonth(col("observation_time")))
     
-    clean_df.show()
-    logger.info(f"💾 Збереження у форматі Parquet...")
+    columns_to_check = ["city", "temperature", "humidity", "sky_condition"]
+    null_df = clean_df.filter(" OR ".join([f"{c} IS NULL" for c in columns_to_check]))
+    null_count = null_df.count()
+
+    anomaly_count = clean_df.filter((col("temperature") < -70) | (col("temperature") > 70)).count()
+
+    if null_count > 0 or anomaly_count > 0:
+        logger.error(f"❌ ВАЛІДАЦІЯ ПРОВАЛЕНА: Знайдено {null_count} NULL значень та {anomaly_count} аномалій!")
+        spark.stop()
+        raise ValueError("Data Quality check failed")
 
     output_path = "s3a://weather-data/silver/weather_history"
-    clean_df.write.mode("append").partitionBy("year", "month", "day","city").parquet(output_path)
+    clean_df.write.mode("append").partitionBy("year", "month", "day", "city").parquet(output_path)
 
-    logger.info(f"✅ Готово! Дані збережено в: {output_path}")
+    logger.info(f"✅ Дані успішно збережено в Silver.")
     spark.stop()
     return True
 
