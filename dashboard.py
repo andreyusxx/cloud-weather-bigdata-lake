@@ -50,7 +50,7 @@ try:
         st.line_chart(chart_data)
 
         st.subheader("Raw Gold Data")
-        st.dataframe(data.sort_values(by='full_date', ascending=False), use_container_width=True)
+        st.dataframe(data.sort_values(by='full_date', ascending=False), width='stretch')
     else:
         st.warning("⚠️ Дані в Gold шарі ще не знайдені. Запусти Airflow таск 'generate_gold_layer'!")
 
