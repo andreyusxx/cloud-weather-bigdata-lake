@@ -53,6 +53,11 @@ def process_weather():
     input_path = "s3a://weather-data/raw/*.json"
     df = spark.read.option("multiLine", "true").json(input_path)
 
+    if df.count() == 0:
+        logger.warning("📭 Немає даних для обробки.")
+        spark.stop()
+        return False
+
     logger.info("⚙️ Трансформація даних...")
     
     clean_df = df.select(
@@ -73,20 +78,19 @@ def process_weather():
 
     logger.info(f"✅ Готово! Дані збережено в: {output_path}")
     spark.stop()
+    return True
 
-def archive_raw_files():
+def move_raw_files(target_prefix='archive/'):
     bucket_name = 'weather-data'
-    prefix = 'raw/'
-    archive_prefix = 'archive/'
+    source_prefix = 'raw/'
 
-    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=source_prefix)
     
     if 'Contents' in response:
         for obj in response['Contents']:
             file_key = obj['Key']
-            if file_key == prefix: continue 
-
-            new_key = file_key.replace(prefix, archive_prefix, 1)
+            if file_key == source_prefix: continue 
+            new_key = file_key.replace(source_prefix, target_prefix, 1)
 
             s3_client.copy_object(
                 Bucket=bucket_name,
@@ -94,9 +98,17 @@ def archive_raw_files():
                 Key=new_key
             )
             s3_client.delete_object(Bucket=bucket_name, Key=file_key)
-            logger.info(f"📦 Файл {file_key} переміщено в архів.")
+            logger.info(f"📦 Файл {file_key} переміщено в {target_prefix}")
     else:
         logger.info("📭 Папка raw порожня, нічого архівувати.")
 if __name__ == "__main__":
-    process_weather()
-    archive_raw_files()
+    try:
+        success = process_weather()
+        if success:
+            move_raw_files(target_prefix='archive/')
+        else:
+            logger.info("Процес завершено без нових даних.")
+    except Exception as e:
+        logger.error(f"💥 Критична помилка Spark: {e}")
+        # Якщо сталася помилка (наприклад, битий JSON) — переносимо в карантин
+        move_raw_files(target_prefix='quarantine/')
