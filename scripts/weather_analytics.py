@@ -1,7 +1,6 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import avg, max, min, count
+from pyspark.sql.functions import avg, max, min, count, col
 import logging
-
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -15,6 +14,22 @@ def create_spark_session():
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
         .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false") \
         .getOrCreate()
+
+def run_data_quality_checks(df):
+    print("=== Запуск перевірки якості даних ===")
+    # 1. Перевірка на NULL (чи є пусті рядки)
+    null_count = df.filter(col("city").isNull() | col("avg_temp").isNull()).count()
+    
+    # 2. Перевірка на аномальну температуру
+    anomaly_count = df.filter((col("avg_temp") < -70) | (col("avg_temp") > 70)).count()
+    
+    if null_count > 0 or anomaly_count > 0:
+        logger.error(f"❌ ПОМИЛКА DQ: Знайдено {null_count} порожніх значень та {anomaly_count} аномалій!")
+        # В реальних проектах тут ми або зупиняємо пайплайн, або відправляємо дані в "смітник" (quarantine)
+        return False
+    
+    logger.info("✅ Перевірка пройдена: дані чисті.")
+    return True
 
 def generate_gold_layer():
     spark = create_spark_session()
@@ -37,9 +52,11 @@ def generate_gold_layer():
     gold_df.show()
 
     logger.info(f"💾 Збереження аналітики в Gold шар...")
-    gold_df.write.mode("overwrite").parquet(output_path)
-
-    logger.info("✅ Gold шар успішно оновлено!")
+    if run_data_quality_checks(gold_df):
+        gold_df.write.mode("overwrite").parquet(output_path)
+        logger.info("✅ Gold шар успішно оновлено!")
+    else:
+        logger.info("⚠️ Запис скасовано через низьку якість даних")
     spark.stop()
 
 if __name__ == "__main__":
