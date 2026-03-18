@@ -52,16 +52,18 @@ def start_streaming():
             col("weather")[0]["description"].alias("sky_condition"),
             current_timestamp().alias("ingested_at")
         )
-
-    # 5. ЗАПИС У КОНСОЛЬ (Для тестування)
-    # Спочатку перевіримо, чи бачить Spark дані, просто виводячи їх на екран
+    
+    # 5. ЗАПИС У MINIO (Silver Layer)
+    # Замість .format("console") використовуємо .format("parquet")
     query = silver_df.writeStream \
+        .format("parquet") \
+        .option("path", "s3a://weather-data/silver/streaming_weather") \
+        .option("checkpointLocation", "s3a://weather-data/checkpoints/weather_v1") \
         .outputMode("append") \
-        .format("console") \
         .trigger(processingTime='10 seconds') \
         .start()
 
-    print("🚀 Spark Streaming запущено! Чекаю на повідомлення з Kafka...")
+    print("📡 Стрімінг запущено! Дані записуються в MinIO (Silver Layer)...")
     query.awaitTermination()
 
 if __name__ == "__main__":
