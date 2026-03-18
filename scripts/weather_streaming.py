@@ -5,6 +5,7 @@ from pyspark.sql.functions import from_unixtime
 # 1. Схема для розшифровки JSON з Kafka
 schema = StructType([
     StructField("name", StringType()),
+    StructField("dt", IntegerType()),
     StructField("main", StructType([
         StructField("temp", DoubleType()),
         StructField("humidity", IntegerType())
