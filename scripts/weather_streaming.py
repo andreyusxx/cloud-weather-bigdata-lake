@@ -1,7 +1,6 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, current_timestamp
+from pyspark.sql.functions import from_json, col, current_timestamp, year, month, dayofmonth
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, ArrayType
-
 # 1. Схема для розшифровки JSON з Kafka
 schema = StructType([
     StructField("name", StringType()),
@@ -53,14 +52,19 @@ def start_streaming():
             current_timestamp().alias("ingested_at")
         )
     
+    final_df = silver_df.withColumn("year", year(col("ingested_at"))) \
+                        .withColumn("month", month(col("ingested_at"))) \
+                        .withColumn("day", dayofmonth(col("ingested_at")))
+    
     # 5. ЗАПИС У MINIO (Silver Layer)
     # Замість .format("console") використовуємо .format("parquet")
-    query = silver_df.writeStream \
+    query = final_df.writeStream \
         .format("parquet") \
-        .option("path", "s3a://weather-data/silver/streaming_weather") \
+        .option("path", "s3a://weather-data/silver/weather_history") \
         .option("checkpointLocation", "s3a://weather-data/checkpoints/weather_v1") \
+        .partitionBy("year", "month", "day", "city") \
         .outputMode("append") \
-        .trigger(processingTime='10 seconds') \
+        .trigger(processingTime='1 minute') \
         .start()
 
     print("📡 Стрімінг запущено! Дані записуються в MinIO (Silver Layer)...")
