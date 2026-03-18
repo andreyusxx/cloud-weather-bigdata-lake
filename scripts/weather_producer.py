@@ -55,9 +55,9 @@ def fetch_and_send():
             except Exception as e:
                 print(f"💥 Помилка запиту: {e}", flush=True)
         
-        print("⏳ Пакет відправлено. Чекаємо 10 секунд...", flush=True)
+        print("⏳ Пакет відправлено. Чекаємо 1 хвилину...", flush=True)
         producer.flush() 
-        time.sleep(10)
+        time.sleep(60)
 
 if __name__ == "__main__":
     print(f"🚀 Producer запускається. Топік: '{TOPIC}'", flush=True)

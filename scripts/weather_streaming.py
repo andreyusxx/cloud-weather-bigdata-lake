@@ -1,6 +1,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, current_timestamp, year, month, dayofmonth
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, ArrayType
+from pyspark.sql.functions import from_unixtime
 # 1. Схема для розшифровки JSON з Kafka
 schema = StructType([
     StructField("name", StringType()),
@@ -49,6 +50,7 @@ def start_streaming():
             col("main.temp").alias("temperature"),
             col("main.humidity").alias("humidity"),
             col("weather")[0]["description"].alias("sky_condition"),
+            from_unixtime(col("dt")).cast("timestamp").alias("actual_weather_time"),
             current_timestamp().alias("ingested_at")
         )
     
@@ -61,7 +63,7 @@ def start_streaming():
     query = final_df.writeStream \
         .format("parquet") \
         .option("path", "s3a://weather-data/silver/weather_history") \
-        .option("checkpointLocation", "s3a://weather-data/checkpoints/weather_v1") \
+        .option("checkpointLocation", "s3a://weather-data/checkpoints/weather_v2") \
         .partitionBy("year", "month", "day", "city") \
         .outputMode("append") \
         .trigger(processingTime='1 minute') \
