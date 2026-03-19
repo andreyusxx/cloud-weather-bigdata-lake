@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, avg, max, min, count, round, first
+from pyspark.sql import functions as F
 
 def create_gold_report():
     spark = SparkSession.builder \
@@ -20,25 +20,30 @@ def create_gold_report():
     clean_df = silver_df.dropDuplicates(["city", "temperature", "humidity"])
 
     print("📊 Розраховую Gold-метрики...")
-    gold_df = clean_df.groupBy("city") \
+    
+    df_with_date = clean_df.withColumn(
+        "report_date", 
+        F.to_date(F.col("actual_weather_time"))
+    )
+
+    gold_df = df_with_date.groupBy("city", "report_date") \
         .agg(
-            round(avg("temperature"), 2).alias("avg_temp"),
-            max("temperature").alias("max_temp"),
-            min("temperature").alias("min_temp"),
-            max("humidity").alias("max_humidity"),
-            count("*").alias("total_measurements"),
-            first("sky_condition").alias("current_sky")
-        ).orderBy(col("avg_temp").desc())
+            F.round(F.avg("temperature"), 2).alias("avg_temp"),
+            F.max("temperature").alias("max_temp"),
+            F.min("temperature").alias("min_temp"),
+            F.max("humidity").alias("max_humidity"),
+            F.count("*").alias("total_measurements"),
+            F.first("sky_condition").alias("current_sky")
+        ) \
+        .orderBy(F.col("report_date").desc(), F.col("avg_temp").desc())
 
-    print("\n🏆 ФІНАЛЬНИЙ ЗВІТ:")
-    gold_df.show()
-
-    print("💾 Зберігаю результат у Gold Layer...")
     gold_df.write \
         .mode("overwrite") \
+        .partitionBy("report_date") \
         .parquet("s3a://weather-data/gold/daily_weather_stats")
 
-    print("✅ Процес завершено! Gold-шар оновлено.")
+    print("✅ Gold шар успішно оновлено з партиціюванням за датою.")
+    spark.stop()
 
 if __name__ == "__main__":
     create_gold_report()
