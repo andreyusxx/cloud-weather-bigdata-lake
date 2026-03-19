@@ -67,7 +67,7 @@ def start_streaming():
         .option("checkpointLocation", "s3a://weather-data/checkpoints/weather_v2") \
         .partitionBy("year", "month", "day", "city") \
         .outputMode("append") \
-        .trigger(processingTime='1 minute') \
+        .trigger(processingTime='5 minute') \
         .start()
 
     print("📡 Стрімінг запущено! Дані записуються в MinIO (Silver Layer)...")
