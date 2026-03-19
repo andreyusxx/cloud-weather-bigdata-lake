@@ -3,11 +3,15 @@ import matplotlib.pyplot as plt
 import s3fs
 import sys
 import datetime
+import matplotlib
+import matplotlib.pyplot as plt
+
+matplotlib.use('Agg')
 # Ми використовуємо s3fs, щоб pandas міг читати прямо з S3
 storage_options = {
     "key": "admin",
     "secret": "password",
-    "client_kwargs": {"endpoint_url": "http://localhost:9000"}
+    "client_kwargs": {"endpoint_url": "http://minio:9000"}
 }
 
 def create_viz():
@@ -28,16 +32,18 @@ def create_viz():
         plt.title('Average Temperature by City')
         plt.ylabel('Temperature (°C)')
         
+        REPORT_DIR = '/opt/airflow/reports'
         
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_path = f'reports/weather_report_{timestamp}.png'
+        report_path = f'{REPORT_DIR}/weather_report_{timestamp}.png'
+        latest_path = f'{REPORT_DIR}/latest_weather_report.png'
         
         plt.savefig(report_path)
-        plt.savefig('reports/latest_weather_report.png')
+        plt.savefig(latest_path)
         print(f"✅ Файли збережено в папку reports!")
+        print(f"✅ Звіт збережено у: {report_path}")
         
-        print("🖼 Відкриваю вікно... Закрийте його, щоб завершити роботу скрипта.")
-        plt.show()
+        # plt.show()
 
     except Exception as e:
         print(f"❌ ПОМИЛКА: {e}")
