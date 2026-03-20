@@ -21,7 +21,7 @@ with DAG(
         task_id='generate_gold_layer',
         bash_command=(
             'docker exec -u 0 spark-master /opt/spark/bin/spark-submit '
-            '--packages org.apache.hadoop:hadoop-aws:3.3.4 '
+            '--packages org.apache.hadoop:hadoop-aws:3.3.4,org.postgresql:postgresql:42.5.0 '
             '/opt/spark/scripts/weather_gold_analytics.py'
         )
     )

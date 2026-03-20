@@ -36,13 +36,23 @@ def create_gold_report():
             F.first("sky_condition").alias("current_sky")
         ) \
         .orderBy(F.col("report_date").desc(), F.col("avg_temp").desc())
-
+    print("📂 Записую Gold-партіції в MinIO...")
     gold_df.write \
         .mode("overwrite") \
         .partitionBy("report_date") \
         .parquet("s3a://weather-data/gold/daily_weather_stats")
-
     print("✅ Gold шар успішно оновлено з партиціюванням за датою.")
+    print("🐘 Експортую вітрину даних у Postgres (weather_db)...")
+    
+    db_url = "jdbc:postgresql://postgres:5432/weather_db"
+    db_properties = {
+        "user": "airflow",
+        "password": "airflow",
+        "driver": "org.postgresql.Driver"
+    }
+    gold_df.write \
+        .mode("overwrite") \
+        .jdbc(url=db_url, table="daily_weather_stats", properties=db_properties)
     spark.stop()
 
 if __name__ == "__main__":
