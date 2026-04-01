@@ -1,11 +1,11 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, current_timestamp, year, month, dayofmonth
-from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, ArrayType
-from pyspark.sql.functions import from_unixtime
+from pyspark.sql.functions import from_json, col, current_timestamp, year, month, dayofmonth, from_unixtime
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, ArrayType, LongType
+
 # 1. Схема для розшифровки JSON з Kafka
 schema = StructType([
     StructField("name", StringType()),
-    StructField("dt", IntegerType()),
+    StructField("dt", LongType()),  # Виправлено на LongType
     StructField("main", StructType([
         StructField("temp", DoubleType()),
         StructField("humidity", IntegerType())
@@ -17,10 +17,10 @@ schema = StructType([
 ])
 
 def start_streaming():
-    # Створюємо сесію. Тут Spark підтягне драйвер для роботи з Kafka
+    # Створюємо сесію
     spark = SparkSession.builder \
         .appName("WeatherStreamingSilver") \
-        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") \
+        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.apache.hadoop:hadoop-aws:3.3.4") \
         .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000") \
         .config("spark.hadoop.fs.s3a.access.key", "admin") \
         .config("spark.hadoop.fs.s3a.secret.key", "password") \
@@ -30,16 +30,16 @@ def start_streaming():
 
     spark.sparkContext.setLogLevel("WARN")
 
-    # 2. ПІДКЛЮЧЕННЯ ДО ПОТОКУ (Reading from Kafka)
+    # 2. ПІДКЛЮЧЕННЯ ДО ПОТОКУ
     raw_stream = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", "kafka:9092") \
         .option("subscribe", "weather_raw") \
         .option("startingOffsets", "earliest") \
+        .option("failOnDataLoss", "false") \
         .load()
 
-    # 3. ТРАНСФОРМАЦІЯ (Parsing JSON)
-    # Перетворюємо бінарні дані в колонки за нашою схемою
+    # 3. ТРАНСФОРМАЦІЯ
     json_stream = raw_stream.selectExpr("CAST(value AS STRING)") \
         .select(from_json(col("value"), schema).alias("data")) \
         .select("data.*")
@@ -60,14 +60,13 @@ def start_streaming():
                         .withColumn("day", dayofmonth(col("ingested_at")))
     
     # 5. ЗАПИС У MINIO (Silver Layer)
-    # Замість .format("console") використовуємо .format("parquet")
     query = final_df.writeStream \
         .format("parquet") \
         .option("path", "s3a://weather-data/silver/weather_history") \
-        .option("checkpointLocation", "s3a://weather-data/checkpoints/weather_v2") \
+        .option("checkpointLocation", "s3a://weather-data/checkpoints/weather_v3") \
         .partitionBy("year", "month", "day", "city") \
         .outputMode("append") \
-        .trigger(processingTime='5 minute') \
+        .trigger(processingTime='1 minute') \
         .start()
 
     print("📡 Стрімінг запущено! Дані записуються в MinIO (Silver Layer)...")
