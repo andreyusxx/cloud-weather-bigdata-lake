@@ -37,7 +37,7 @@ def create_gold_report():
             F.count("*").alias("total_measurements"),
             F.first("sky_condition").alias("current_sky")
         ) \
-        .orderBy(F.col("report_date").desc(), F.col("avg_temp").desc())
+        .orderBy(F.col("report_hour").desc(), F.col("avg_temp").desc())
     print("📂 Записую Gold-партіції в MinIO...")
     gold_df.write \
         .mode("overwrite") \

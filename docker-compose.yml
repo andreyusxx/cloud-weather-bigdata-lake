@@ -114,6 +114,16 @@ services:
       - default
     restart: always
 
+  weather-producer:
+    build: ./path_to_producer
+    restart: always
+    environment:
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+
+  spark-streaming-silver:
+    image: apache/spark:3.5.0
+    command: /opt/spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 /opt/spark/scripts/weather_streaming.py
+    restart: always
 networks:
   default:
     external:

@@ -35,7 +35,7 @@ def start_streaming():
         .format("kafka") \
         .option("kafka.bootstrap.servers", "kafka:9092") \
         .option("subscribe", "weather_raw") \
-        .option("startingOffsets", "latest") \
+        .option("startingOffsets", "earliest") \
         .load()
 
     # 3. ТРАНСФОРМАЦІЯ (Parsing JSON)
