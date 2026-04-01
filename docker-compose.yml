@@ -115,7 +115,7 @@ services:
     restart: always
 
   weather-producer:
-    build: ./path_to_producer
+    build: ./scripts
     restart: always
     environment:
       - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}

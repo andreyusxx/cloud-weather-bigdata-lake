@@ -13,7 +13,7 @@ CITIES = ["Kyiv", "Lviv", "Odesa", "Kharkiv", "Dnipro"]
 TOPIC = "weather_raw"
 
 # Підключення до Kafka
-conf = {'bootstrap.servers': "localhost:29092"}
+conf = {'bootstrap.servers': "kafka:9092"}
 producer = Producer(conf)
 
 def delivery_report(err, msg):
