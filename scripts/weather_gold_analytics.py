@@ -9,6 +9,7 @@ def create_gold_report():
         .config("spark.hadoop.fs.s3a.secret.key", "password") \
         .config("spark.hadoop.fs.s3a.path.style.access", "true") \
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
+        .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version", "2") \
         .getOrCreate()
 
     spark.sparkContext.setLogLevel("ERROR")
@@ -20,13 +21,14 @@ def create_gold_report():
     clean_df = silver_df.dropDuplicates(["city", "temperature", "humidity"])
 
     print("📊 Розраховую Gold-метрики...")
-    
-    df_with_date = clean_df.withColumn(
-        "report_date", 
-        F.to_date(F.col("actual_weather_time"))
+
+    df_with_time = clean_df.withColumn(
+        "report_date", F.to_date(F.col("actual_weather_time"))
+    ).withColumn(
+        "report_hour", F.date_trunc("hour", F.col("actual_weather_time"))
     )
 
-    gold_df = df_with_date.groupBy("city", "report_date") \
+    gold_df = df_with_time.groupBy("city", "report_date", "report_hour") \
         .agg(
             F.round(F.avg("temperature"), 2).alias("avg_temp"),
             F.max("temperature").alias("max_temp"),
@@ -51,7 +53,7 @@ def create_gold_report():
         "driver": "org.postgresql.Driver"
     }
     gold_df.write \
-        .mode("overwrite") \
+        .mode("append") \
         .jdbc(url=db_url, table="daily_weather_stats", properties=db_properties)
     spark.stop()
 
