@@ -18,17 +18,15 @@ def create_gold_report():
     silver_df = spark.read.parquet("s3a://weather-data/silver/weather_history")
 
     print("🧹 Очищую дані від дублікатів...")
-    clean_df = silver_df.dropDuplicates(["city", "temperature", "humidity"])
-
-    print("📊 Розраховую Gold-метрики...")
-
-    df_with_time = clean_df.withColumn(
+    df_with_time = silver_df.withColumn(
         "report_date", F.to_date(F.col("actual_weather_time"))
     ).withColumn(
         "report_hour", F.date_trunc("hour", F.col("actual_weather_time"))
     )
 
-    gold_df = df_with_time.groupBy("city", "report_date", "report_hour") \
+    clean_df = df_with_time.dropDuplicates(["city", "report_hour"])
+    print("📊 Розраховую Gold-метрики...")
+    gold_df = clean_df.groupBy("city", "report_date", "report_hour") \
         .agg(
             F.round(F.avg("temperature"), 2).alias("avg_temp"),
             F.max("temperature").alias("max_temp"),
@@ -53,7 +51,7 @@ def create_gold_report():
         "driver": "org.postgresql.Driver"
     }
     gold_df.write \
-        .mode("append") \
+        .mode("overwrite") \
         .jdbc(url=db_url, table="daily_weather_stats", properties=db_properties)
     spark.stop()
 
