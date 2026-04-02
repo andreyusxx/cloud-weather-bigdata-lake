@@ -24,7 +24,7 @@ def create_gold_report():
         "report_hour", F.date_trunc("hour", F.col("actual_weather_time"))
     )
 
-    clean_df = df_with_time.dropDuplicates(["city", "report_hour"])
+    clean_df = df_with_time.dropDuplicates(["city", "actual_weather_time"])
     print("📊 Розраховую Gold-метрики...")
     gold_df = clean_df.groupBy("city", "report_date", "report_hour") \
         .agg(
