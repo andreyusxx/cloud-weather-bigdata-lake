@@ -13,6 +13,9 @@
     1.  **Spark Streaming** — для надійної обробки та запису в Data Lake.
     2.  **Independent Python Logger** — для миттєвого моніторингу "сирих" подій у реальному часі.
 
+
+# End-to-End Weather Data Lakehouse Architecture
+![Data Lakehouse Architecture](reports/weather_architecture.png)
 ---
 
 ## 🛡️ Data Quality & Reliability
