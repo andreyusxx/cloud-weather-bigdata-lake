@@ -35,7 +35,7 @@ try:
     data = load_gold_data()
     
     if not data.empty:
-        data['full_date'] = pd.to_datetime(data[['year', 'month', 'day']])
+        data['full_date'] = pd.to_datetime(data['report_hour'])
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -43,7 +43,7 @@ try:
         with col2:
             st.metric("Avg Global Temp", f"{data['avg_temp'].mean():.2f} °C")
         with col3:
-            st.metric("Total Measurements", data['measurements_count'].sum())
+            st.metric("Total Measurements", data['total_measurements'].sum())
 
         st.subheader("Temperature Trends by City")
         chart_data = data.pivot(index='full_date', columns='city', values='avg_temp')
